@@ -12,8 +12,8 @@ const DEFAULT_GAMES = [
   },
   {
     id: 'chrono-5',
-    name: 'Chrono 5 (Chronefive)',
-    url: 'https://chrono5.com/',
+    name: 'Chrono 5',
+    url: 'https://chronofive.com/',
     category: 'daily',
     icon: 'fa-clock',
     color: 'from-blue-500 to-indigo-600',
@@ -23,7 +23,7 @@ const DEFAULT_GAMES = [
   {
     id: 'color-guesser',
     name: 'Color Guesser',
-    url: 'https://color-guesser.com/',
+    url: 'https://colorguesser.com/',
     category: 'geo',
     icon: 'fa-palette',
     color: 'from-purple-500 to-pink-500',
