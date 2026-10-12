@@ -128,41 +128,12 @@
       <!-- Game cards injected dynamically via JavaScript -->
     </main>
 
-    <!-- Daily Winner & Notes Panel -->
-    <section class="glass-card rounded-2xl p-6 mb-12">
-      <div class="flex items-center gap-2 mb-4">
-        <i data-lucide="notebook-pen" class="w-5 h-5 text-amber-400"></i>
-        <h3 class="font-semibold text-stone-100">Daily Competition Log</h3>
-      </div>
-      
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-xs font-medium text-stone-400 mb-1.5">Today's Crown Winner</label>
-          <select id="dailyWinnerSelect" class="w-full bg-stone-900 border border-stone-800 rounded-xl px-3 py-2.5 text-sm text-stone-200 focus:outline-none focus:border-amber-500/50">
-            <option value="none">Undecided / Friendly Match</option>
-            <option value="aed">👑 Aed won today!</option>
-            <option value="partner">👑 Partner won today!</option>
-            <option value="tie">🤝 It's a Tie!</option>
-          </select>
-        </div>
-        
-        <div class="md:col-span-2">
-          <label class="block text-xs font-medium text-stone-400 mb-1.5">Game Notes & Highlights (e.g. Wordle in 2/6, Chronofive score)</label>
-          <div class="flex gap-2">
-            <input type="text" id="dailyNotesInput" placeholder="Record today's impressive scores or funny moments..." class="flex-1 bg-stone-900 border border-stone-800 rounded-xl px-3.5 py-2.5 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-amber-500/50">
-            <button onclick="saveDailyNotes()" class="px-4 py-2.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-semibold hover:bg-amber-500/30 transition flex items-center gap-1.5">
-              <i data-lucide="save" class="w-3.5 h-3.5"></i> Save
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
+
 
   <!-- Footer -->
   <footer class="border-t border-stone-800/60 py-6 text-center text-xs text-stone-500">
     <p class="flex items-center justify-center gap-1">
-      Made for Aed & Partner <i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-rose-500"></i> Local storage enabled for seamless tracking.
+      Made for Me and You <i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-rose-500"></i>
     </p>
   </footer>
 
