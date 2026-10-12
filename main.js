@@ -1,381 +1,352 @@
-// Default standard games
+// Master Games Dataset
 const DEFAULT_GAMES = [
   {
-    id: 'enclose',
-    name: 'Enclose',
-    url: 'https://enclose.horse',
-    desc: 'We cant keep letting this horse get out',
-    category: 'visual',
-    icon: 'grid',
-    badge: 'Favorite'
+    id: 'enclose-horse',
+    name: 'Enclose Horse',
+    url: 'https://enclose.horse/',
+    category: 'daily',
+    icon: 'fa-horse-head',
+    color: 'from-amber-500 to-orange-600',
+    badge: 'Popular',
+    tip: 'Fence in the horse using as few barriers as possible! Watch out for corner escapes.'
   },
   {
-    id: 'chronofive',
-    name: 'Chronofive',
-    url: 'https://chronofive.com',
-    desc: 'Pinpoint correct years for each historical event',
-    category: 'word',
-    icon: 'clock',
-    badge: 'History'
+    id: 'chrono-5',
+    name: 'Chrono 5 (Chronefive)',
+    url: 'https://chrono5.com/',
+    category: 'daily',
+    icon: 'fa-clock',
+    color: 'from-blue-500 to-indigo-600',
+    badge: 'Timeline',
+    tip: 'Pinpoint those dates!'
   },
   {
-    id: 'colorguesser',
+    id: 'color-guesser',
     name: 'Color Guesser',
-    url: 'https://guessthecolor.com',
-    desc: 'How well do we know our colors?',
-    category: 'visual',
-    icon: 'palette',
-    badge: 'Visual'
-  },
-  {
-    id: 'connections',
-    name: 'Connections',
-    url: 'https://www.nytimes.com/games/connections',
-    desc: 'Group words into 4 categories of common themes',
-    category: 'word',
-    icon: 'boxes',
-    badge: 'NYT'
+    url: 'https://color-guesser.com/',
+    category: 'geo',
+    icon: 'fa-palette',
+    color: 'from-purple-500 to-pink-500',
+    badge: 'Visual',
+    tip: 'How well can we identify colors?'
   },
   {
     id: 'wordle',
-    name: 'Wordle',
+    name: 'NYT Wordle',
     url: 'https://www.nytimes.com/games/wordle/index.html',
-    desc: 'Guess the secret 5-letter word in 6 tries',
-    category: 'word',
-    icon: 'type',
-    badge: 'Classic'
+    category: 'words',
+    icon: 'fa-font',
+    color: 'from-emerald-500 to-teal-600',
+    badge: 'Classic',
+    tip: 'Guess the Words.'
   },
   {
-    id: 'minicrossword',
-    name: 'Mini Crossword',
-    url: 'https://www.nytimes.com/crosswords/game/mini',
-    desc: 'Bite-sized daily crossword speed run',
-    category: 'word',
-    icon: 'square-asterisk',
-    badge: 'Speed Run'
+    id: 'connections',
+    name: 'NYT Connections',
+    url: 'https://www.nytimes.com/games/connections',
+    category: 'words',
+    icon: 'fa-diagram-project',
+    color: 'from-indigo-500 to-violet-600',
+    badge: 'Logic',
+    tip: 'Finding connections in random words.'
+  },
+  {
+    id: 'worldle',
+    name: 'Worldle Geo',
+    url: 'https://worldle.teuteuf.fr/',
+    category: 'geo',
+    icon: 'fa-earth-americas',
+    color: 'from-cyan-500 to-blue-600',
+    badge: 'Geography',
+    tip: 'Use direction and percentage distance clues carefully.'
   }
 ];
 
-// State initialization
+// State variables
 let games = [];
-let dailyData = {};
-let activeCategory = 'all';
-const todayKey = new Date().toISOString().split('T')[0];
+let completedGames = {}; // { 'YYYY-MM-DD': { 'game-id': true } }
+let currentFilter = 'all';
 
-// Initialize application state on page load
+// Get Today's Date String YYYY-MM-DD
+function getTodayString() {
+  const today = new Date();
+  return today.toISOString().split('T')[0];
+}
+
+// Initialize App
 window.onload = function () {
-  // 1. Format date
-  const options = { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' };
-  document.getElementById('currentDateText').innerText = new Date().toLocaleDateString('en-US', options);
+  loadSavedData();
+  renderGamesGrid();
+  startResetCountdown();
+  updateStreakCounter();
 
-  // 2. Load stored games or set defaults
-  const storedGames = localStorage.getItem('daily_portal_games');
-  if (storedGames) {
-    games = JSON.parse(storedGames);
-  } else {
-    games = [...DEFAULT_GAMES];
-    localStorage.setItem('daily_portal_games', JSON.stringify(games));
-  }
-
-  // 3. Load today's check-ins data
-  const storedData = localStorage.getItem('daily_portal_progress');
-  if (storedData) {
-    const parsed = JSON.parse(storedData);
-    if (parsed.date === todayKey) {
-      dailyData = parsed;
-    } else {
-      // Reset progress for a new date
-      dailyData = { date: todayKey, checks: {}, winner: 'none', notes: '' };
-    }
-  } else {
-    dailyData = { date: todayKey, checks: {}, winner: 'none', notes: '' };
-  }
-
-  // Initialize defaults for missing game keys
-  games.forEach(game => {
-    if (!dailyData.checks[game.id]) {
-      dailyData.checks[game.id] = { aed: false, partner: false };
-    }
-  });
-
-  // Populate notes & winner controls
-  document.getElementById('dailyWinnerSelect').value = dailyData.winner || 'none';
-  document.getElementById('dailyNotesInput').value = dailyData.notes || '';
-
-  // Event listener for daily winner select
-  document.getElementById('dailyWinnerSelect').addEventListener('change', (e) => {
-    dailyData.winner = e.target.value;
-    saveDailyData();
-    updateStats();
-  });
-
-  // Search bar event listener
-  document.getElementById('searchInput').addEventListener('input', renderGames);
-
-  // Render initial state
-  renderGames();
-  updateStats();
-  lucide.createIcons();
+  // Format Today's Date in Header
+  const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+  document.getElementById('current-date-display').innerText = new Date().toLocaleDateString(undefined, options);
 };
 
-function renderGames() {
-  const grid = document.getElementById('gamesGrid');
-  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+function loadSavedData() {
+  // Load games list
+  const savedGames = localStorage.getItem('couple_games_list');
+  if (savedGames) {
+    try { games = JSON.parse(savedGames); } catch (e) { games = DEFAULT_GAMES; }
+  } else {
+    games = DEFAULT_GAMES;
+  }
 
-  // Filter games by category and search
+  // Load completed map
+  const savedCompleted = localStorage.getItem('couple_games_completed');
+  if (savedCompleted) {
+    try { completedGames = JSON.parse(savedCompleted); } catch (e) { }
+  }
+}
+
+function renderGamesGrid() {
+  const container = document.getElementById('games-grid');
+  container.innerHTML = '';
+
+  const today = getTodayString();
+  const todayCompleted = completedGames[today] || {};
+
+  const searchTerm = document.getElementById('game-search').value.toLowerCase();
+
   const filtered = games.filter(game => {
-    const matchesCategory = activeCategory === 'all' || game.category === activeCategory;
+    const matchesCategory = (currentFilter === 'all') || (game.category === currentFilter);
     const matchesSearch = game.name.toLowerCase().includes(searchTerm) ||
-      game.desc.toLowerCase().includes(searchTerm);
+      (game.tip && game.tip.toLowerCase().includes(searchTerm));
     return matchesCategory && matchesSearch;
   });
 
   if (filtered.length === 0) {
-    grid.innerHTML = `
-            <div class="col-span-full py-12 text-center text-stone-500">
-              <i data-lucide="gamepad-2" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
-              <p class="text-sm">No games found matching your search.</p>
-            </div>
-          `;
-    lucide.createIcons();
+    container.innerHTML = `
+                  <div class="col-span-full py-12 text-center text-slate-400">
+                      <i class="fa-solid fa-gamepad text-3xl mb-2 opacity-50"></i>
+                      <p class="text-sm font-medium">No games found matching your search!</p>
+                  </div>
+              `;
+    updateProgressStats();
     return;
   }
 
-  grid.innerHTML = filtered.map(game => {
-    const checkState = dailyData.checks[game.id] || { aed: false, partner: false };
-    const isBothDone = checkState.aed && checkState.partner;
+  filtered.forEach(game => {
+    const isCompleted = !!todayCompleted[game.id];
 
-    return `
-            <div class="glass-card rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 relative group overflow-hidden ${isBothDone ? 'border-emerald-500/30 bg-emerald-950/10' : ''}">
-              
-              ${isBothDone ? `<div class="absolute top-0 right-0 w-16 h-16 pointer-events-none overflow-hidden">
-                <div class="bg-emerald-500 text-stone-950 text-[9px] font-bold py-0.5 right-[-35px] top-[18px] w-[120px] text-center transform rotate-45 absolute shadow-sm uppercase tracking-wider">Done</div>
-              </div>` : ''}
-  
-              <div>
-                <div class="flex items-start justify-between mb-3">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-stone-900 border border-stone-800 flex items-center justify-center text-amber-400 group-hover:border-amber-500/40 group-hover:bg-amber-500/10 transition">
-                      <i data-lucide="${game.icon || 'gamepad-2'}" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                      <h3 class="font-bold text-stone-100 text-base leading-tight flex items-center gap-2">
-                        ${game.name}
-                      </h3>
-                      <span class="text-[10px] uppercase font-semibold text-stone-500 tracking-wider">${game.badge || 'Daily'}</span>
-                    </div>
+    const card = document.createElement('div');
+    card.className = `group relative bg-white dark:bg-slate-900 rounded-3xl border ${isCompleted ? 'border-emerald-300 dark:border-emerald-800/60 bg-emerald-50/20 dark:bg-emerald-950/10' : 'border-slate-200/80 dark:border-slate-800'} p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between overflow-hidden`;
+
+    card.innerHTML = `
+                  <!-- Top Ribbon/Badge -->
+                  <div>
+                      <div class="flex items-start justify-between gap-3 mb-3">
+                          <div class="flex items-center space-x-3">
+                              <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr ${game.color || 'from-theme-500 to-pink-500'} flex items-center justify-center text-white shadow-md text-xl group-hover:scale-105 transition-transform">
+                                  <i class="fa-solid ${game.icon || 'fa-gamepad'}"></i>
+                              </div>
+                              <div>
+                                  <h3 class="font-display font-bold text-base text-slate-800 dark:text-slate-100 group-hover:text-theme-500 transition-colors flex items-center gap-1.5">
+                                      ${game.name}
+                                  </h3>
+                                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                      ${game.category}
+                                  </span>
+                              </div>
+                          </div>
+
+                          <!-- Toggle Complete Button -->
+                          <button onclick="toggleGameCompletion('${game.id}')" title="Toggle Completion" class="w-9 h-9 rounded-2xl flex items-center justify-center transition-all ${isCompleted ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 hover:text-emerald-500'}">
+                              <i class="fa-solid fa-check text-sm font-bold"></i>
+                          </button>
+                      </div>
+
+                      <!-- Game Tip / Strategy Note -->
+                      ${game.tip ? `
+                      <div class="mt-3 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80 flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400">
+                          <i class="fa-solid fa-lightbulb text-amber-500 text-xs mt-0.5"></i>
+                          <span class="text-[11px] leading-relaxed">${game.tip}</span>
+                      </div>
+                      ` : ''}
                   </div>
-  
-                  ${game.isCustom ? `
-                    <button onclick="removeGame('${game.id}')" title="Remove Custom Game" class="opacity-0 group-hover:opacity-100 text-stone-600 hover:text-rose-400 transition p-1">
-                      <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                  ` : ''}
-                </div>
-  
-                <p class="text-xs text-stone-400 mb-5 leading-relaxed">${game.desc}</p>
-              </div>
-  
-              <div class="space-y-4 pt-3 border-t border-stone-800/60">
-                <!-- Checkboxes for couple -->
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-stone-400 font-medium">Completed today:</span>
-                  <div class="flex items-center gap-2">
-                    <!-- Aed Checkbox -->
-                    <label class="inline-flex items-center gap-1.5 cursor-pointer bg-stone-900/80 px-2.5 py-1.5 rounded-lg border border-stone-800/80 hover:border-amber-500/40 transition">
-                      <input 
-                        type="checkbox" 
-                        ${checkState.aed ? 'checked' : ''} 
-                        onchange="toggleCheck('${game.id}', 'aed')"
-                        class="rounded border-stone-700 bg-stone-950 text-amber-500 focus:ring-amber-500/40 focus:ring-offset-0 w-3.5 h-3.5 cursor-pointer"
-                      >
-                      <span class="${checkState.aed ? 'text-amber-300 font-semibold' : 'text-stone-400'}">Aed</span>
-                    </label>
-  
-                    <!-- Partner Checkbox -->
-                    <label class="inline-flex items-center gap-1.5 cursor-pointer bg-stone-900/80 px-2.5 py-1.5 rounded-lg border border-stone-800/80 hover:border-teal-500/40 transition">
-                      <input 
-                        type="checkbox" 
-                        ${checkState.partner ? 'checked' : ''} 
-                        onchange="toggleCheck('${game.id}', 'partner')"
-                        class="rounded border-stone-700 bg-stone-950 text-teal-500 focus:ring-teal-500/40 focus:ring-offset-0 w-3.5 h-3.5 cursor-pointer"
-                      >
-                      <span class="${checkState.partner ? 'text-teal-300 font-semibold' : 'text-stone-400'}">Partner</span>
-                    </label>
+
+                  <!-- Bottom Actions -->
+                  <div class="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                      <a href="${game.url}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2 px-3 rounded-xl bg-slate-900 dark:bg-slate-100 hover:bg-theme-600 dark:hover:bg-theme-500 text-white dark:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-sm">
+                          <span>Play Game</span>
+                          <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                      </a>
+
+                      ${game.isCustom ? `
+                      <button onclick="deleteCustomGame('${game.id}')" class="p-2 text-slate-400 hover:text-rose-500 rounded-xl transition-colors" title="Delete Game">
+                          <i class="fa-solid fa-trash text-xs"></i>
+                      </button>
+                      ` : ''}
                   </div>
-                </div>
-  
-                <!-- Direct Launch Link -->
-                <a 
-                  href="${game.url}" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  class="w-full py-2.5 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700/60 text-xs font-semibold text-stone-200 flex items-center justify-center gap-2 group-hover:border-amber-500/30 transition shadow-sm"
-                >
-                  <span>Play ${game.name}</span>
-                  <i data-lucide="external-link" class="w-3.5 h-3.5 text-stone-400 group-hover:text-amber-400 transition"></i>
-                </a>
-              </div>
-  
-            </div>
-          `;
-  }).join('');
+              `;
 
-  lucide.createIcons();
-}
-
-function toggleCheck(gameId, player) {
-  if (!dailyData.checks[gameId]) {
-    dailyData.checks[gameId] = { aed: false, partner: false };
-  }
-
-  dailyData.checks[gameId][player] = !dailyData.checks[gameId][player];
-  saveDailyData();
-  renderGames();
-  updateStats();
-}
-
-function saveDailyData() {
-  localStorage.setItem('daily_portal_progress', JSON.stringify(dailyData));
-}
-
-function updateStats() {
-  let aedDone = 0;
-  let partnerDone = 0;
-  const totalGames = games.length;
-
-  games.forEach(game => {
-    const check = dailyData.checks[game.id];
-    if (check?.aed) aedDone++;
-    if (check?.partner) partnerDone++;
+    container.appendChild(card);
   });
 
-  // Calculate total completed percentage
-  const totalPossible = totalGames * 2;
-  const currentDone = aedDone + partnerDone;
-  const percentage = totalPossible > 0 ? Math.round((currentDone / totalPossible) * 100) : 0;
+  updateProgressStats();
+}
 
-  // Update UI Counters
-  document.getElementById('aedCount').innerText = `${aedDone}/${totalGames}`;
-  document.getElementById('partnerCount').innerText = `${partnerDone}/${totalGames}`;
-  document.getElementById('overallPercentage').innerText = `${percentage}%`;
-  document.getElementById('progressBar').style.width = `${percentage}%`;
+function toggleGameCompletion(gameId) {
+  const today = getTodayString();
+  if (!completedGames[today]) {
+    completedGames[today] = {};
+  }
 
-  // Update Today's Leader text
-  const leaderText = document.getElementById('todayLeader');
-  if (dailyData.winner === 'aed') {
-    leaderText.innerText = '👑 Aed';
-    leaderText.className = 'text-base font-semibold text-amber-300';
-  } else if (dailyData.winner === 'partner') {
-    leaderText.innerText = '👑 Partner';
-    leaderText.className = 'text-base font-semibold text-teal-300';
-  } else if (dailyData.winner === 'tie') {
-    leaderText.innerText = '🤝 Tied Match';
-    leaderText.className = 'text-base font-semibold text-stone-300';
+  completedGames[today][gameId] = !completedGames[today][gameId];
+  localStorage.setItem('couple_games_completed', JSON.stringify(completedGames));
+
+  renderGamesGrid();
+  updateStreakCounter();
+}
+
+function updateProgressStats() {
+  const today = getTodayString();
+  const todayCompleted = completedGames[today] || {};
+
+  const total = games.length;
+  let completedCount = 0;
+
+  games.forEach(g => {
+    if (todayCompleted[g.id]) completedCount++;
+  });
+
+  const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+
+  document.getElementById('completion-percentage').innerText = `${percent}%`;
+  document.getElementById('completion-ratio').innerText = `${completedCount}/${total}`;
+  document.getElementById('progress-bar-inner').style.width = `${percent}%`;
+}
+
+function updateStreakCounter() {
+  let streak = 0;
+  let curr = new Date();
+
+  while (true) {
+    const dateStr = curr.toISOString().split('T')[0];
+    const dayCompleted = completedGames[dateStr] || {};
+
+    const allDone = games.length > 0 && games.every(g => !!dayCompleted[g.id]);
+
+    if (allDone) {
+      streak++;
+      curr.setDate(curr.getDate() - 1);
+    } else {
+      const isToday = dateStr === getTodayString();
+      if (isToday) {
+        curr.setDate(curr.getDate() - 1);
+        continue;
+      }
+      break;
+    }
+  }
+
+  document.getElementById('streak-counter').innerText = streak;
+
+  const statusText = document.getElementById('streak-status-text');
+  if (streak > 0) {
+    statusText.innerText = `🔥 ${streak} day streak active!`;
   } else {
-    if (aedDone > partnerDone) {
-      leaderText.innerText = 'Aed (+1 ahead)';
-      leaderText.className = 'text-base font-semibold text-amber-300';
-    } else if (partnerDone > aedDone) {
-      leaderText.innerText = 'Partner (+1 ahead)';
-      leaderText.className = 'text-base font-semibold text-teal-300';
-    } else {
-      leaderText.innerText = 'Tied 🤝';
-      leaderText.className = 'text-base font-semibold text-stone-200';
-    }
+    statusText.innerText = `Complete all ${games.length} games today!`;
   }
-
-  // Calculate or display Streak
-  updateStreakCounter(percentage === 100);
 }
 
-function updateStreakCounter(isToday100) {
-  let streak = parseInt(localStorage.getItem('daily_portal_streak') || '0', 10);
-  const lastCompletedDate = localStorage.getItem('daily_portal_last_streak_date');
+function startResetCountdown() {
+  function updateTimer() {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0);
 
-  if (isToday100 && lastCompletedDate !== todayKey) {
-    // Increment streak if not already recorded today
-    streak++;
-    localStorage.setItem('daily_portal_streak', streak.toString());
-    localStorage.setItem('daily_portal_last_streak_date', todayKey);
+    const diff = midnight - now;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+    const fmt = (n) => n.toString().padStart(2, '0');
+    const timeString = `${fmt(hours)}:${fmt(mins)}:${fmt(secs)}`;
+
+    document.getElementById('reset-timer').innerText = timeString;
+    document.getElementById('reset-timer-mobile').innerText = timeString;
   }
 
-  document.getElementById('streakCount').innerText = streak;
+  updateTimer();
+  setInterval(updateTimer, 1000);
 }
 
-function filterCategory(category) {
-  activeCategory = category;
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    if (btn.dataset.category === category) {
-      btn.className = 'filter-btn active px-3.5 py-2 rounded-xl text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap transition';
+function filterGames(category) {
+  currentFilter = category;
+  document.querySelectorAll('.category-tab').forEach(tab => {
+    if (tab.getAttribute('data-category') === category) {
+      tab.classList.add('bg-white', 'dark:bg-slate-800', 'text-slate-800', 'dark:text-slate-100', 'shadow-sm');
+      tab.classList.remove('text-slate-600', 'dark:text-slate-400');
     } else {
-      btn.className = 'filter-btn px-3.5 py-2 rounded-xl text-xs font-medium bg-stone-900 text-stone-400 border border-stone-800 hover:text-stone-200 whitespace-nowrap transition';
+      tab.classList.remove('bg-white', 'dark:bg-slate-800', 'text-slate-800', 'dark:text-slate-100', 'shadow-sm');
+      tab.classList.add('text-slate-600', 'dark:text-slate-400');
     }
   });
-  renderGames();
+  renderGamesGrid();
 }
 
-function saveDailyNotes() {
-  const val = document.getElementById('dailyNotesInput').value;
-  dailyData.notes = val;
-  saveDailyData();
-
-  // Temporary button state response
-  const btn = event.currentTarget;
-  btn.innerText = 'Saved!';
-  setTimeout(() => {
-    btn.innerHTML = '<i data-lucide="save" class="w-3.5 h-3.5"></i> Save';
-    lucide.createIcons();
-  }, 1500);
+function handleSearch() {
+  renderGamesGrid();
 }
 
 function openAddModal() {
-  document.getElementById('addModal').classList.remove('hidden');
+  const modal = document.getElementById('add-modal');
+  const content = document.getElementById('add-modal-content');
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    modal.classList.remove('opacity-0');
+    content.classList.remove('scale-95');
+  }, 10);
 }
 
 function closeAddModal() {
-  document.getElementById('addModal').classList.add('hidden');
-  document.getElementById('addGameForm').reset();
+  const modal = document.getElementById('add-modal');
+  const content = document.getElementById('add-modal-content');
+  modal.classList.add('opacity-0');
+  content.classList.add('scale-95');
+  setTimeout(() => {
+    modal.classList.add('hidden');
+  }, 200);
 }
 
 function handleAddGame(e) {
   e.preventDefault();
+  const name = document.getElementById('modal-game-name').value.trim();
+  const url = document.getElementById('modal-game-url').value.trim();
+  const category = document.getElementById('modal-game-category').value;
+  const icon = document.getElementById('modal-game-icon').value;
+  const tip = document.getElementById('modal-game-tip').value.trim();
 
-  const name = document.getElementById('gameName').value.trim();
-  const url = document.getElementById('gameUrl').value.trim();
-  const desc = document.getElementById('gameDesc').value.trim() || 'Custom daily game';
-  const category = document.getElementById('gameCategory').value;
-  const icon = document.getElementById('gameIcon').value;
+  if (!name || !url) return;
 
   const newGame = {
-    id: 'custom_' + Date.now(),
+    id: 'custom-' + Date.now(),
     name: name,
-    url: url.startsWith('http') ? url : 'https://' + url,
-    desc: desc,
+    url: url,
     category: category,
     icon: icon,
-    badge: 'Custom',
+    color: 'from-pink-500 to-rose-600',
+    tip: tip || 'Custom added game',
     isCustom: true
   };
 
   games.push(newGame);
-  dailyData.checks[newGame.id] = { aed: false, partner: false };
-
-  localStorage.setItem('daily_portal_games', JSON.stringify(games));
-  saveDailyData();
+  localStorage.setItem('couple_games_list', JSON.stringify(games));
 
   closeAddModal();
-  renderGames();
-  updateStats();
+  document.getElementById('add-game-form').reset();
+  renderGamesGrid();
 }
 
-function removeGame(gameId) {
-  if (confirm('Are you sure you want to remove this custom game?')) {
-    games = games.filter(g => g.id !== gameId);
-    delete dailyData.checks[gameId];
-    localStorage.setItem('daily_portal_games', JSON.stringify(games));
-    saveDailyData();
-    renderGames();
-    updateStats();
-  }
+function deleteCustomGame(gameId) {
+  games = games.filter(g => g.id !== gameId);
+  localStorage.setItem('couple_games_list', JSON.stringify(games));
+  renderGamesGrid();
+}
+
+function toggleDarkMode() {
+  document.documentElement.classList.toggle('dark');
 }

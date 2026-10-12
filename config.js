@@ -1,24 +1,23 @@
 tailwind.config = {
     darkMode: 'class',
     theme: {
-      extend: {
-        fontFamily: {
-          sans: ['Plus Jakarta Sans', 'sans-serif'],
-        },
-        colors: {
-          brand: {
-            50: '#FAF8F5',
-            100: '#F4EFE6',
-            200: '#E6DCCB',
-            500: '#D97706',
-            800: '#2A2421',
-            900: '#1A1614',
-            950: '#110E0D',
-            accent: '#E0A96D',
-            rose: '#E29578',
-            sage: '#83A598',
-          }
+        extend: {
+            fontFamily: {
+                sans: ['Plus Jakarta Sans', 'sans-serif'],
+                display: ['Outfit', 'sans-serif'],
+            },
+            colors: {
+                theme: {
+                    50: 'var(--color-50)',
+                    100: 'var(--color-100)',
+                    200: 'var(--color-200)',
+                    500: 'var(--color-500)',
+                    600: 'var(--color-600)',
+                    700: 'var(--color-700)',
+                    800: 'var(--color-800)',
+                    900: 'var(--color-900)',
+                }
+            }
         }
-      }
     }
-  }
+}
