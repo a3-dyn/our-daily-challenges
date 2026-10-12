@@ -1,0 +1,36 @@
+body {
+    background-color: #12100E;
+    color: #ECE5DC;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  
+  .glass-card {
+    background: rgba(28, 25, 23, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(217, 119, 6, 0.12);
+  }
+
+  .glass-card:hover {
+    border-color: rgba(224, 169, 109, 0.35);
+    box-shadow: 0 10px 30px -10px rgba(224, 169, 109, 0.1);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 25px -5px rgba(224, 169, 109, 0.15);
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #12100E;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2A2421;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3D3530;
+  }
